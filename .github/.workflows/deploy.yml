@@ -1,0 +1,56 @@
+# 工作流名称，显示在 GitHub Actions 界面上
+name: 🚀 Deploy Pure HTML to Vercel
+
+# 当代码推送到 'main' 分支时触发此工作流
+on:
+  push:
+    branches:
+      - main
+
+# 定义一个名为 'deploy' 的作业
+jobs:
+  deploy:
+    # 指定作业在最新的 Ubuntu 运行器上执行
+    runs-on: ubuntu-latest
+
+    # 作业中的一系列步骤
+    steps:
+      # 步骤 1: 检出仓库代码
+      # 使用 actions/checkout@v4 Action，将你的 GitHub 仓库代码拉取到运行器上
+      - name: ⬇️ Checkout repository
+        uses: actions/checkout@v4
+
+      # 步骤 2: 设置 Node.js 环境
+      # Vercel CLI 是基于 Node.js 的，因此需要安装 Node.js
+      - name: 🛠️ Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18' # 推荐使用 Node.js LTS 版本
+
+      # 步骤 3: 安装 Vercel CLI 工具
+      # 全局安装最新版 Vercel CLI
+      - name: 📦 Install Vercel CLI
+        run: npm install -g vercel@latest
+
+      # 步骤 4: 部署到 Vercel
+      # 执行 vercel 部署命令
+      - name: 🚀 Deploy to Vercel
+        run: vercel --prebuilt --prod --confirm # --prebuilt 告诉 Vercel 不需要构建，--prod 部署到生产环境，--confirm 自动确认
+        env:
+          # 从 GitHub Secrets 中获取 Vercel Token 作为环境变量
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+
+      # 步骤 5: 获取部署后的 URL (可选，但推荐)
+      # 这个步骤会尝试从 Vercel CLI 的输出中提取并打印部署的 URL
+      # 注意：对于首次部署，Vercel 会自动创建一个项目。后续部署会更新现有项目。
+      # 这里的命令比较通用，但对于复杂的 Vercel 项目配置，可能需要调整。
+      - name: ✅ Get Deployment URL
+        run: |
+          # 尝试获取最近的生产部署URL
+          DEPLOYMENT_URL=$(vercel --token ${{ secrets.VERCEL_TOKEN }} ls --prod --limit 1 | grep 'https://' | awk '{print $NF}')
+          if [ -z "$DEPLOYMENT_URL" ]; then
+              echo "Failed to get deployment URL directly, please check Vercel dashboard."
+          else
+              echo "🎉 Deployment successful! You can find it at: $DEPLOYMENT_URL"
+              echo "DEPLOYMENT_URL=$DEPLOYMENT_URL" >> $GITHUB_ENV # 将URL设置为环境变量，方便后续步骤使用
+          fi
