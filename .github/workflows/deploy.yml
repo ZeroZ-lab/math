@@ -35,7 +35,7 @@ jobs:
       # 步骤 4: 部署到 Vercel
       # 执行 vercel 部署命令
       - name: 🚀 Deploy to Vercel
-        run: vercel --prebuilt --prod --confirm # --prebuilt 告诉 Vercel 不需要构建，--prod 部署到生产环境，--confirm 自动确认
+        run: vercel --prebuilt --prod --yes
         env:
           # 从 GitHub Secrets 中获取 Vercel Token 作为环境变量
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
